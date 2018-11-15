@@ -34,112 +34,73 @@
 </template>
 
 <script>
-    //import axios from 'axios';
-    import firebase from 'firebase/app'
-    import {productsCollection} from "../firebaseConfig";
+import firebase from 'firebase/app'
+import {productsCollection} from "../firebaseConfig";
 
-    export default {
-        name: 'admin-create',
-        data () {
-            return {
-                selectedFile: null,
-                newProduct: {
-                    title: '',
-                    subtitle: '',
-                    desc: '',
-                    price: null,
-                    imageSrc: '',
-                    createdAt: new Date()
-                },
-                imageUploadState: null
-            }
-        },
-        watch: {
+export default {
+    name: 'admin-create',
+    data () {
+        return {
+            selectedFile: null,
+            newProduct: {
+                title: '',
+                subtitle: '',
+                desc: '',
+                price: null,
+                imageSrc: '',
+                createdAt: new Date()
+            },
+            imageUploadState: null
+        }
+    },
+    methods: {
+        onFileSelected(event) {
+            this.selectedFile = event.target.files[0];
 
-        },
-        methods: {
-            onFileSelected(event) {
-                this.selectedFile = event.target.files[0];
+            const self = this;
+            const ref = firebase.storage().ref();
+            const file = this.selectedFile;
+            const fileName = file.name;
+            const metadata = { contentType: file.type };
+            const task = ref.child(fileName).put(file, metadata);
 
-                const self = this;
-                const ref = firebase.storage().ref();
-                const file = this.selectedFile;
-                const fileName = file.name;
-                const metadata = { contentType: file.type };
-                const task = ref.child(fileName).put(file, metadata);
-
-                task.on('state_changed', function(snapshot){
-                    // Observe state change events such as progress, pause, and resume
-                    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            task.on('state_changed',
+                snapshot => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     self.imageUploadState = progress;
                     switch (snapshot.state) {
-                        case firebase.storage.TaskState.PAUSED: // or 'paused'
+                        case firebase.storage.TaskState.PAUSED:
                             console.log('Upload is paused');
                             break;
-                        case firebase.storage.TaskState.RUNNING: // or 'running'
+                        case firebase.storage.TaskState.RUNNING:
                             console.log('Upload is running');
                             break;
                     }
-                }, function(error) {
-                    // Handle unsuccessful uploads
-                }, function() {
-                    // Handle successful uploads on complete
-                    // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+                },
+                error => {
+                    console.log('Upload is failed', error.message);
+                },
+                () => {
                     task.snapshot.ref.getDownloadURL().then(function(downloadURL) {
-                        console.log('File available at', downloadURL);
                         self.newProduct.imageSrc = downloadURL;
                     });
-                });
-
-                // task
-                //     .then(snapshot => snapshot.ref.getDownloadURL())
-                //     .then(
-                //         url => {
-                //             this.newProduct.imageSrc = url;
-                //             console.log(url);
-                //         }
-                //     )
-                //     .catch((error) => {
-                //         switch (error.code) {
-                //             case 'storage/unauthorized':
-                //                 break;
-                //             case 'storage/canceled':
-                //                 break;
-                //             case 'storage/unknown':
-                //                 break;
-                //         }
-                //     });
-            },
-            onUpload() {
-                // const fd = new FormData();
-                // fd.append('image', this.selectedFile, this.selectedFile.name);
-                // axios.post('https://us-central1-my-awesome-project-id-13a4a.cloudfunctions.net/uploadFile', fd, {
-                //   onUploadProgress: uploadEvent => {
-                //     console.log(uploadEvent);
-                //   }
-                // })
-                //   .then(res => {
-                //     console.log(res);
-                //   });
-
-
-            },
-            addNewProduct() {
-                const prod = this.newProduct;
-                productsCollection.add({ ...prod })
-                    .then(
-                        () => {
-                            alert('Product was successfully added!');
-                            document.getElementById("newProductForm").reset();
-                        },
-                        err => {
-                            console.error(`Data wasnt add!! Error: ${err}`);
-                        },
-                    );
-            }
+            });
+        },
+        addNewProduct() {
+            const prod = this.newProduct;
+            productsCollection.add({ ...prod })
+                .then(
+                    () => {
+                        alert('Product was successfully added!');
+                        document.getElementById("newProductForm").reset();
+                    },
+                    err => {
+                        console.error(`Data wasnt add!! Error: ${err}`);
+                    },
+                );
         }
     }
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

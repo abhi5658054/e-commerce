@@ -6,7 +6,7 @@
         </div>
     </transition>
     <section>
-        <div class="col1">
+        <div class="col3">
             <form @submit.prevent="onSignIn">
                 <h1>Hi, admin!!! Please login</h1>
 
@@ -42,12 +42,13 @@
                     email: '',
                     password: ''
                 },
-                performingRequest: true,
+                performingRequest: false,
                 errorMsg: ''
             }
         },
         methods: {
             onSignIn() {
+                this.performingRequest = true;
                 auth.signInWithEmailAndPassword(this.loginForm.email, this.loginForm.password)
                     .then(user => {
                         this.$store.commit('setCurrentUser', user.user);
@@ -65,5 +66,7 @@
 </script>
 
 <style scoped>
-
+    section {
+        justify-content: center;
+    }
 </style>
